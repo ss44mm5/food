@@ -4,396 +4,470 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="吃什麼">
-<meta name="theme-color" content="#ff6b35">
+<meta name="theme-color" content="#0f0e11">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>今天吃什麼？</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="吃貨配對">
+<title>吃貨配對所</title>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0a0a0a;--surface:#141414;--card:#1c1c1c;
-  --accent:#ff6b35;--accent2:#ffd166;--accent3:#06d6a0;
-  --text:#f0ede8;--muted:#555;--border:#252525;
+  --bg:#0f0e11;--surface:#1a1820;
+  --yes:#00e87a;--no:#ff3d5a;
+  --text:#f5f0ff;--muted:#6b6578;--border:#2a2733;
+  --gold:#ffd166;
   --safe-top:env(safe-area-inset-top,0px);
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;display:flex;flex-direction:column;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Noto Sans TC',sans-serif;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;}
 
-/* App shell */
-.app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top);}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
+.orb1{width:400px;height:400px;background:rgba(0,232,122,0.06);top:-100px;right:-100px;}
+.orb2{width:350px;height:350px;background:rgba(255,61,90,0.06);bottom:-80px;left:-80px;}
+.orb3{width:300px;height:300px;background:rgba(255,209,102,0.04);top:40%;left:-80px;}
 
-/* Top bar */
-.topbar{flex-shrink:0;padding:12px 18px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
-.app-title{font-size:18px;font-weight:900;background:linear-gradient(135deg,#fff,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.app-sub{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;}
+.app{position:relative;z-index:1;width:100%;max-width:420px;height:100%;display:flex;flex-direction:column;padding-top:var(--safe-top);}
 
-/* Tabs */
-.tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--border);}
-.tab{flex:1;padding:12px 0;text-align:center;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;position:relative;transition:color 0.2s;}
-.tab.active{color:var(--accent);}
-.tab.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:2px;}
+/* Header */
+.hdr{padding:14px 18px 8px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Dela Gothic One',sans-serif;font-size:20px;letter-spacing:-0.5px;}
+.logo span{color:var(--yes);}
+.counter-pill{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:12px;color:var(--muted);font-family:'Dela Gothic One',sans-serif;letter-spacing:1px;}
 
-/* Scrollable content */
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.page{display:none;padding:16px;}
-.page.active{display:block;}
+/* Fortune banner */
+.fortune-banner{margin:0 18px 8px;background:linear-gradient(135deg,rgba(255,209,102,0.08),rgba(255,209,102,0.03));border:1px solid rgba(255,209,102,0.2);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;}
+.fortune-banner:active{transform:scale(0.98);}
+.fortune-icon{font-size:20px;flex-shrink:0;}
+.fortune-text{font-size:12px;color:var(--gold);line-height:1.5;flex:1;}
+.fortune-tap{font-size:10px;color:var(--muted);white-space:nowrap;}
 
-/* Location */
-.loc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
-.loc-card.active{border-color:rgba(6,214,160,0.4);background:rgba(6,214,160,0.03);}
-.loc-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background 0.3s;}
-.loc-card.active .loc-dot{background:var(--accent3);box-shadow:0 0 8px var(--accent3);}
-.loc-info{flex:1;}
-.loc-label{font-size:11px;color:var(--muted);margin-bottom:2px;}
-.loc-val{font-size:13px;font-weight:700;color:var(--muted);}
-.loc-card.active .loc-val{color:var(--text);}
-.btn-gps{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;}
-.btn-gps:disabled{background:var(--border);cursor:not-allowed;}
+/* Progress */
+.progress-wrap{padding:4px 18px 4px;}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--yes),#00bcd4);border-radius:2px;transition:width 0.4s ease;}
 
-.manual-row{display:none;gap:8px;margin-bottom:10px;}
-.manual-row.show{display:flex;}
-.manual-in{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;}
-.manual-in:focus{border-color:var(--accent);}
-.manual-in::placeholder{color:var(--muted);font-size:12px;}
-.btn-ok{background:var(--accent3);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;}
-.hint{font-size:11px;color:var(--muted);text-align:center;cursor:pointer;padding:4px 0 12px;}
+/* Stage */
+.stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative;padding:0 20px;}
+.stack{position:relative;width:100%;max-width:340px;height:410px;}
 
-/* Category grid */
-.sec-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
-.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
-.cat-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 4px 10px;text-align:center;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:5px;-webkit-user-select:none;user-select:none;}
-.cat-btn:active{transform:scale(0.95);}
-.cat-btn.active{border-color:var(--accent);background:rgba(255,107,53,0.1);}
-.cat-e{font-size:24px;}
-.cat-n{font-size:12px;font-weight:700;}
-.cat-btn.active .cat-n{color:var(--accent);}
+/* Card */
+.card{
+  position:absolute;inset:0;
+  background:var(--surface);border:1px solid var(--border);border-radius:28px;
+  overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+  will-change:transform;
+}
+.card:active{cursor:grabbing;}
+.card-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:180px;opacity:0.15;transform:scale(1.1);}
+.card-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:24px 22px;}
+.card-meta{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap;}
+.card-tag{display:inline-flex;align-items:center;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.card-cal{display:inline-flex;align-items:center;gap:3px;background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.2);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;color:var(--gold);}
+.card-name{font-family:'Dela Gothic One',sans-serif;font-size:42px;line-height:1;margin-bottom:7px;letter-spacing:-1px;}
+.card-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;}
+.card-emoji-big{font-size:66px;margin-bottom:10px;}
 
-/* Distance */
-.dist-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.dist-val{font-family:'Space Mono',monospace;font-size:14px;color:var(--accent2);font-weight:700;}
-input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;outline:none;margin-bottom:16px;}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 12px rgba(255,107,53,0.5);}
+/* Stamps */
+.stamp{position:absolute;top:32px;padding:7px 16px;border-radius:10px;font-family:'Dela Gothic One',sans-serif;font-size:24px;letter-spacing:2px;border:4px solid;opacity:0;pointer-events:none;}
+.stamp-yes{right:20px;color:var(--yes);border-color:var(--yes);transform:rotate(-15deg);}
+.stamp-no{left:20px;color:var(--no);border-color:var(--no);transform:rotate(15deg);}
 
-/* Buttons */
-.btn-main{width:100%;background:linear-gradient(135deg,var(--accent),#ff9a5c);color:#fff;border:none;border-radius:14px;padding:17px;font-size:17px;font-weight:900;font-family:'Noto Sans TC',sans-serif;cursor:pointer;margin-bottom:10px;transition:all 0.2s;}
-.btn-main:active{transform:scale(0.97);}
-.btn-main:disabled{background:var(--border);cursor:not-allowed;}
-.btn-sec{width:100%;background:transparent;border:1px solid rgba(255,209,102,0.3);color:var(--accent2);border-radius:14px;padding:14px;font-size:14px;font-weight:700;font-family:'Noto Sans TC',sans-serif;cursor:pointer;transition:all 0.2s;}
-.btn-sec:active{background:rgba(255,209,102,0.08);}
-.btn-sec:disabled{opacity:0.3;cursor:not-allowed;}
+.card-behind{transform:scale(0.93) translateY(14px);z-index:0;pointer-events:none;}
+.card-behind2{transform:scale(0.86) translateY(28px);z-index:-1;pointer-events:none;opacity:0.5;}
+.card-top{z-index:10;}
 
-/* Map page */
-.map-wrap{position:relative;height:calc(100% - 0px);}
-#mapFrame{width:100%;height:100%;border:none;}
-.map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);text-align:center;padding:30px;}
-.map-empty .big{font-size:52px;}
-.map-empty p{font-size:14px;line-height:1.8;}
-.map-toolbar{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:8px;z-index:10;}
-.map-chip{background:rgba(10,10,10,0.88);border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);backdrop-filter:blur(8px);white-space:nowrap;}
-.map-chip.accent{background:rgba(255,107,53,0.9);border-color:transparent;}
+/* Hint */
+.swipe-hint{text-align:center;font-size:11px;color:var(--muted);letter-spacing:1px;padding:5px 0 2px;}
 
-/* Lucky modal */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:50;align-items:flex-end;justify-content:center;padding-bottom:var(--safe-bottom);}
-.overlay.show{display:flex;}
-.sheet{background:var(--card);border-radius:24px 24px 0 0;padding:28px 24px calc(24px + var(--safe-bottom));width:100%;max-width:500px;text-align:center;animation:slideUp 0.3s ease;}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
-.sheet-emoji{font-size:56px;display:block;margin-bottom:8px;}
-.sheet-label{font-size:11px;color:var(--muted);letter-spacing:3px;font-family:'Space Mono',monospace;margin-bottom:8px;}
-.sheet-pick{font-size:32px;font-weight:900;margin-bottom:20px;min-height:44px;transition:all 0.25s;}
-.sheet-btns{display:flex;gap:10px;margin-bottom:12px;}
-.sheet-go{flex:2;background:var(--accent);color:#fff;border:none;border-radius:13px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
-.sheet-reroll{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:13px;padding:15px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
-.sheet-cancel{font-size:13px;color:var(--muted);cursor:pointer;padding:8px;}
+/* Actions */
+.actions{padding:12px 20px calc(12px + var(--safe-bot));display:flex;align-items:center;justify-content:center;gap:20px;}
+.btn-action{width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;transition:all 0.15s;-webkit-user-select:none;user-select:none;}
+.btn-action:active{transform:scale(0.88);}
+.btn-no{background:rgba(255,61,90,0.12);color:var(--no);border:2px solid rgba(255,61,90,0.3);}
+.btn-yes{background:rgba(0,232,122,0.12);color:var(--yes);border:2px solid rgba(0,232,122,0.3);}
+.btn-undo{width:46px;height:46px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:18px;}
 
-/* Bottom nav */
-.bottom-nav{flex-shrink:0;display:flex;border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);background:var(--bg);}
-.nav-btn{flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all 0.2s;color:var(--muted);}
-.nav-btn.active{color:var(--accent);}
-.nav-icon{font-size:20px;}
-.nav-label{font-size:10px;font-weight:700;}
+/* Result screen */
+.result-screen{display:none;flex-direction:column;align-items:center;padding:24px 20px calc(24px + var(--safe-bot));overflow-y:auto;height:100%;}
+.result-screen.show{display:flex;}
+.result-top{text-align:center;margin-bottom:20px;}
+.result-emoji{font-size:50px;display:block;margin-bottom:8px;}
+.result-title{font-family:'Dela Gothic One',sans-serif;font-size:28px;margin-bottom:5px;}
+.result-sub{font-size:13px;color:var(--muted);line-height:1.7;}
+.liked-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-bottom:20px;}
+.liked-chip{background:var(--surface);border:1px solid rgba(0,232,122,0.2);border-radius:16px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.liked-chip-emoji{font-size:26px;}
+.liked-chip-name{font-size:13px;font-weight:700;text-align:center;}
+.liked-chip-tag{font-size:10px;color:var(--muted);}
+.btn-restart{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all 0.2s;}
+.btn-restart:active{transform:scale(0.97);}
 
-.toast{position:fixed;top:calc(var(--safe-top) + 60px);left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 22px;font-size:13px;z-index:200;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* Empty */
+.empty-screen{display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center;gap:12px;}
+.empty-screen.show{display:flex;}
+.empty-emoji{font-size:64px;}
+.empty-title{font-family:'Dela Gothic One',sans-serif;font-size:26px;}
+.empty-sub{font-size:14px;color:var(--muted);line-height:1.8;}
+
+/* Fortune modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:#1c1a24;border-radius:24px 24px 0 0;padding:28px 24px calc(32px + var(--safe-bot));width:100%;max-width:420px;animation:up 0.3s ease;text-align:center;}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 22px;}
+.modal-fortune-icon{font-size:52px;margin-bottom:14px;display:block;}
+.modal-fortune-title{font-family:'Dela Gothic One',sans-serif;font-size:13px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;}
+.modal-fortune-main{font-family:'Dela Gothic One',sans-serif;font-size:26px;color:var(--gold);line-height:1.4;margin-bottom:10px;}
+.modal-fortune-sub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;}
+.btn-modal-close{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.btn-modal-reroll{background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:12px;font-family:'Noto Sans TC',sans-serif;display:block;width:100%;}
 </style>
 </head>
 <body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
 <div class="app">
-
-  <!-- Top bar -->
-  <div class="topbar">
-    <div>
-      <div class="app-title">今天吃什麼？</div>
-    </div>
-    <div class="app-sub">FOOD FINDER</div>
+  <div class="hdr">
+    <div class="logo">吃貨<span>配對</span>所</div>
+    <div class="counter-pill" id="counterPill">50 道菜</div>
   </div>
 
-  <!-- Content -->
-  <div class="content" id="content">
-
-    <!-- Search page -->
-    <div class="page active" id="pageSearch">
-
-      <!-- Location -->
-      <div class="sec-label" style="margin-top:4px">你在哪裡？</div>
-      <div class="loc-card" id="locCard">
-        <div class="loc-dot"></div>
-        <div class="loc-info">
-          <div class="loc-label">目前位置</div>
-          <div class="loc-val" id="locVal">尚未取得位置</div>
-        </div>
-        <button class="btn-gps" id="gpsBtn" onclick="getLocation()">📍 定位</button>
-      </div>
-      <div class="manual-row" id="manualRow">
-        <input class="manual-in" id="manualIn" placeholder="地址 或 座標 25.03,121.56" onkeydown="if(event.key==='Enter')confirmManual()">
-        <button class="btn-ok" onclick="confirmManual()">✓</button>
-      </div>
-      <div class="hint" onclick="toggleManual()" id="hintToggle">✏️ 手動輸入地址 或 貼上座標</div>
-
-      <!-- Categories -->
-      <div class="sec-label">想吃什麼？</div>
-      <div class="cat-grid">
-        <div class="cat-btn active" data-kw="餐廳 美食" onclick="selectCat(this)"><span class="cat-e">🍽</span><span class="cat-n">全部</span></div>
-        <div class="cat-btn" data-kw="台式料理 便當 小吃" onclick="selectCat(this)"><span class="cat-e">🍱</span><span class="cat-n">台式</span></div>
-        <div class="cat-btn" data-kw="日式料理 壽司 拉麵" onclick="selectCat(this)"><span class="cat-e">🍣</span><span class="cat-n">日式</span></div>
-        <div class="cat-btn" data-kw="中式料理 熱炒" onclick="selectCat(this)"><span class="cat-e">🥢</span><span class="cat-n">中式</span></div>
-        <div class="cat-btn" data-kw="韓式料理 烤肉" onclick="selectCat(this)"><span class="cat-e">🥘</span><span class="cat-n">韓式</span></div>
-        <div class="cat-btn" data-kw="漢堡 義大利麵 西餐" onclick="selectCat(this)"><span class="cat-e">🍔</span><span class="cat-n">西式</span></div>
-        <div class="cat-btn" data-kw="泰式 越南料理 東南亞" onclick="selectCat(this)"><span class="cat-e">🍜</span><span class="cat-n">東南亞</span></div>
-        <div class="cat-btn" data-kw="素食 蔬食" onclick="selectCat(this)"><span class="cat-e">🥗</span><span class="cat-n">素食</span></div>
-        <div class="cat-btn" data-kw="咖啡 手搖飲 甜點" onclick="selectCat(this)"><span class="cat-e">🧋</span><span class="cat-n">飲料甜點</span></div>
-      </div>
-
-      <!-- Distance -->
-      <div class="sec-label">搜尋範圍</div>
-      <div class="dist-row">
-        <span style="font-size:12px;color:var(--muted)">距離我</span>
-        <span class="dist-val" id="distVal">500m</span>
-      </div>
-      <input type="range" id="distSlider" min="200" max="3000" step="100" value="500" oninput="updateDist(this.value)">
-
-      <!-- CTAs -->
-      <button class="btn-main" id="searchBtn" onclick="doSearch()" disabled>🔍 搜尋附近餐廳</button>
-      <button class="btn-sec" id="luckyBtn" onclick="showLucky()" disabled>🎲 幫我隨機選一間！</button>
-    </div>
-
-    <!-- Map page -->
-    <div class="page" id="pageMap" style="padding:0;height:100%;">
-      <div class="map-wrap" id="mapWrap">
-        <div class="map-empty" id="mapEmpty">
-          <div class="big">🗺</div>
-          <p>先回到搜尋頁<br>選好類型再搜尋<br>地圖就會出現在這裡</p>
-        </div>
-        <div class="map-toolbar" id="mapToolbar" style="display:none">
-          <div class="map-chip accent" id="curKwChip">全部餐廳</div>
-          <div class="map-chip" onclick="goSearch()">← 重新選</div>
-        </div>
-        <iframe id="mapFrame" style="display:none" allowfullscreen></iframe>
-      </div>
-    </div>
-
+  <!-- Fortune banner -->
+  <div class="fortune-banner" id="fortuneBanner" onclick="openFortune()">
+    <span class="fortune-icon">🔮</span>
+    <span class="fortune-text" id="fortuneShort">載入今日運勢中...</span>
+    <span class="fortune-tap">點擊看詳細 →</span>
   </div>
 
-  <!-- Bottom nav -->
-  <div class="bottom-nav">
-    <div class="nav-btn active" id="navSearch" onclick="switchNav('search')">
-      <span class="nav-icon">🔍</span>
-      <span class="nav-label">搜尋</span>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="stack" id="stack"></div>
+  </div>
+
+  <div class="swipe-hint" id="swipeHint">← 不要 &nbsp;|&nbsp; 右滑想吃 →</div>
+
+  <div class="actions" id="actionBtns">
+    <button class="btn-action btn-no" onclick="swipeCard('no')">✕</button>
+    <button class="btn-action btn-undo" onclick="undoSwipe()">↩</button>
+    <button class="btn-action btn-yes" onclick="swipeCard('yes')">♥</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-top">
+      <span class="result-emoji">🎉</span>
+      <div class="result-title">你想吃這些！</div>
+      <div class="result-sub" id="resultSub"></div>
     </div>
-    <div class="nav-btn" id="navMap" onclick="switchNav('map')">
-      <span class="nav-icon">🗺</span>
-      <span class="nav-label">地圖</span>
-    </div>
+    <div class="liked-grid" id="likedGrid"></div>
+    <button class="btn-restart" onclick="restartApp()">🔄 再刷一次</button>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-screen" id="emptyScreen">
+    <div class="empty-emoji">😮‍💨</div>
+    <div class="empty-title">什麼都不想吃？</div>
+    <div class="empty-sub">挑嘴也太厲害了<br>要不要重新再刷一輪？</div>
+    <button class="btn-restart" style="margin-top:16px" onclick="restartApp()">🔄 重新開始</button>
   </div>
 </div>
 
-<!-- Lucky sheet -->
-<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <span class="sheet-emoji" id="sEmoji">🎲</span>
-    <div class="sheet-label">今天就吃這個！</div>
-    <div class="sheet-pick" id="sPick">拉麵</div>
-    <div class="sheet-btns">
-      <button class="sheet-go" onclick="luckyGo()">🗺 馬上找！</button>
-      <button class="sheet-reroll" onclick="reroll()">🎲 重抽</button>
-    </div>
-    <div class="sheet-cancel" onclick="closeSheet()">取消</div>
+<!-- Fortune Modal -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeFortune()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <span class="modal-fortune-icon" id="mIcon">🔮</span>
+    <div class="modal-fortune-title">今日飲食運勢</div>
+    <div class="modal-fortune-main" id="mMain">加載中...</div>
+    <div class="modal-fortune-sub" id="mSub"></div>
+    <button class="btn-modal-close" onclick="closeFortune()">收下這個運勢 ✨</button>
+    <button class="btn-modal-reroll" onclick="rollFortune()">🎲 再抽一次</button>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
 
 <script>
-// Register SW
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+// ── Fortune data ──────────────────────────────────────────
+const FORTUNES = [
+  {icon:'🌶',main:'今天吃辣，財運大旺',sub:'辣椒的熱力會激活你的能量場，建議選擇麻辣或韓式料理，下午會有意外之喜。',short:'今天吃辣，財運大旺 🌶'},
+  {icon:'🍜',main:'湯湯水水，貴人相助',sub:'今日適合喝湯，熱湯能化解阻礙。牛肉麵、火鍋、河粉都是好選擇，飯後喝完湯底運氣更好。',short:'湯湯水水，貴人相助 🍜'},
+  {icon:'🧋',main:'喝甜的，壞心情散光',sub:'今天情緒容易波動，一杯甜飲料能平衡你的氣場。珍珠奶茶、抹茶拿鐵都有加分效果。',short:'喝甜的，壞心情散光 🧋'},
+  {icon:'🍱',main:'吃便當，腳踏實地',sub:'樸實的便當食物今日為你帶來穩定感，滷肉飯或排骨飯讓你思路清晰，適合做重要決定。',short:'吃便當，腳踏實地 🍱'},
+  {icon:'🎲',main:'今天讓別人決定吃什麼',sub:'強行做決定會帶來麻煩。交給命運或朋友選擇，反而會有驚喜。記得讓對方先點。',short:'今天讓別人決定 🎲'},
+  {icon:'🥩',main:'吃肉補氣，全力衝刺',sub:'今日陽氣旺盛，適合補充蛋白質。燒肉、牛排、炸豬排都能助你在下午爆發超強戰鬥力。',short:'吃肉補氣，全力衝刺 🥩'},
+  {icon:'🍣',main:'吃日料，品味提升',sub:'今日審美運極佳，吃精緻一點的食物能帶來靈感。壽司或日式定食讓你整天氣質滿點。',short:'吃日料，品味提升 🍣'},
+  {icon:'🫕',main:'揪人一起吃，緣分加倍',sub:'今日適合群聚，火鍋或燒肉桌最能增進感情。單獨吃飯運勢減半，快去找人！',short:'揪人一起吃，緣分加倍 🫕'},
+  {icon:'🍳',main:'吃早午餐，時間會變慢',sub:'今天不要急，慢慢來。豐盛的早午餐讓你進入高效狀態，咖啡記得加一份。',short:'吃早午餐，時間變慢 🍳'},
+  {icon:'🥟',main:'吃包餡的，藏著好消息',sub:'今日有隱藏的好消息等你發現。小籠包、水餃、肉圓都是吉祥食物，記得咬開前許願。',short:'吃包餡的，藏好消息 🥟'},
+  {icon:'🌙',main:'今天不宜暴飲暴食',sub:'今日腸胃運勢偏弱，輕食為佳。吃七分飽，留三分給生命中的驚喜。',short:'今天不宜暴飲暴食 🌙'},
+  {icon:'🔥',main:'今天吃燒烤，熱情燃起',sub:'今日激情指數爆表，燒烤的煙火氣能共鳴你的內在能量。記得不要烤焦，象徵計畫別過頭。',short:'今天吃燒烤，熱情燃起 🔥'},
+  {icon:'🥗',main:'吃點蔬食，靈感大爆發',sub:'今天大腦需要清爽的食物啟動。吃素食或沙拉讓思路如泉湧，下午的會議你將成為全場焦點。',short:'吃蔬食，靈感大爆發 🥗'},
+  {icon:'🍰',main:'今天必須吃甜點',sub:'不吃甜點今天會後悔。蛋糕、冰淇淋、豆花都有今日特效，把它當作獎勵自己的儀式吧。',short:'今天必須吃甜點 🍰'},
+  {icon:'⚡',main:'吃最快的那一個',sub:'今日效率運當道，不要猶豫。看菜單第一眼選到什麼就吃什麼，猶豫只會讓運氣溜走。',short:'吃最快選到的那個 ⚡'},
+];
+
+let currentFortune = null;
+
+function getDailyFortune() {
+  // Same fortune per day
+  const day = new Date().toDateString();
+  let hash = 0;
+  for (let c of day) hash = (hash * 31 + c.charCodeAt(0)) % FORTUNES.length;
+  return FORTUNES[hash];
 }
 
-let userLat=null, userLng=null;
-let selectedKw='餐廳 美食';
-let selectedLabel='全部餐廳';
-let luckyPick='';
-
-const pools={
-  '餐廳 美食':['牛肉麵','火鍋','熱炒','便當','燒肉','炸雞','壽司','拉麵','炒飯','水餃','麻辣燙','滷肉飯'],
-  '台式料理 便當 小吃':['滷肉飯','排骨飯','鹹酥雞','牛肉麵','蚵仔煎','臭豆腐','炒米粉','雞排','控肉飯'],
-  '日式料理 壽司 拉麵':['拉麵','壽司','丼飯','烏龍麵','天婦羅','炸豬排','日式定食','手卷','生魚片'],
-  '中式料理 熱炒':['小籠包','熱炒','水煮魚','餃子','蔥油餅','炸醬麵','麻婆豆腐','宮保雞丁'],
-  '韓式料理 烤肉':['韓國烤肉','部隊鍋','石鍋拌飯','韓式炸雞','辣炒年糕','豆腐鍋','冷麵'],
-  '漢堡 義大利麵 西餐':['漢堡','義大利麵','牛排','披薩','早午餐','沙拉','三明治'],
-  '泰式 越南料理 東南亞':['泰式料理','越南河粉','打拋豬','月亮蝦餅','綠咖哩','椰汁湯'],
-  '素食 蔬食':['素食便當','蔬食料理','素食自助餐','素麵','素火鍋'],
-  '咖啡 手搖飲 甜點':['珍珠奶茶','咖啡','鬆餅','冰淇淋','蛋糕','抹茶甜點'],
-};
-
-function getLocation(){
-  const btn=document.getElementById('gpsBtn');
-  btn.disabled=true; btn.textContent='定位中...';
-  if(!navigator.geolocation){toast('不支援定位');btn.disabled=false;btn.textContent='📍 定位';toggleManual();return;}
-  navigator.geolocation.getCurrentPosition(
-    pos=>{
-      userLat=pos.coords.latitude; userLng=pos.coords.longitude;
-      document.getElementById('locVal').textContent=`${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
-      document.getElementById('locCard').classList.add('active');
-      btn.textContent='✅ 重新定位'; btn.disabled=false;
-      enableBtns(); toast('✅ 定位成功！');
-    },
-    ()=>{toast('定位失敗，請手動輸入');btn.textContent='📍 定位';btn.disabled=false;toggleManual();},
-    {timeout:8000,enableHighAccuracy:true}
-  );
+function rollFortune() {
+  currentFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+  renderFortune();
 }
 
-function enableBtns(){
-  document.getElementById('searchBtn').disabled=false;
-  document.getElementById('luckyBtn').disabled=false;
+function renderFortune() {
+  document.getElementById('mIcon').textContent = currentFortune.icon;
+  document.getElementById('mMain').textContent = currentFortune.main;
+  document.getElementById('mSub').textContent = currentFortune.sub;
+  document.getElementById('fortuneShort').textContent = currentFortune.short;
 }
 
-function toggleManual(){
-  const r=document.getElementById('manualRow');
-  const show=!r.classList.contains('show');
-  r.classList.toggle('show',show);
-  document.getElementById('hintToggle').textContent=show?'▲ 收起':'✏️ 手動輸入地址 或 貼上座標';
-  if(show) setTimeout(()=>document.getElementById('manualIn').focus(),80);
+function openFortune() {
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeFortune() {
+  document.getElementById('modalBg').classList.remove('show');
 }
 
-async function confirmManual(){
-  const val=document.getElementById('manualIn').value.trim();
-  if(!val){toast('請輸入地址或座標');return;}
-  const m=val.match(/^(-?\d+\.?\d*)\s*[,，]\s*(-?\d+\.?\d*)$/);
-  if(m){
-    userLat=parseFloat(m[1]); userLng=parseFloat(m[2]);
-    document.getElementById('locVal').textContent=`${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
-    document.getElementById('locCard').classList.add('active');
-    document.getElementById('manualRow').classList.remove('show');
-    document.getElementById('hintToggle').textContent='✏️ 手動輸入地址 或 貼上座標';
-    enableBtns(); toast('✅ 座標設定成功！'); return;
+// ── Food data ─────────────────────────────────────────────
+const FOODS = [
+  {name:'牛肉麵',emoji:'🍜',tag:'台式',cal:550,desc:'紅燒慢燉，滷到入味的台灣魂'},
+  {name:'滷肉飯',emoji:'🍚',tag:'台式',cal:480,desc:'肥而不膩的滷肉，一口飯一口幸福'},
+  {name:'鹹酥雞',emoji:'🍗',tag:'台式',cal:520,desc:'九層塔香氣撲鼻，炸得金黃酥脆'},
+  {name:'蚵仔煎',emoji:'🥚',tag:'台式',cal:280,desc:'鮮嫩蚵仔包在蛋皮裡，台式靈魂小吃'},
+  {name:'排骨飯',emoji:'🍖',tag:'台式',cal:620,desc:'酥炸排骨配白飯，便當的經典王道'},
+  {name:'臭豆腐',emoji:'🫙',tag:'台式',cal:320,desc:'聞起來臭吃起來香，台灣夜市精神'},
+  {name:'肉圓',emoji:'🟤',tag:'台式',cal:350,desc:'Q彈外皮包著滿滿餡料，南北各有風味'},
+  {name:'米粉湯',emoji:'🥣',tag:'台式',cal:300,desc:'清甜豬骨湯底，細米粉滑順入喉'},
+  {name:'切仔麵',emoji:'🍝',tag:'台式',cal:380,desc:'油蔥香氣濃郁，台灣麵食的平民之光'},
+  {name:'豬血糕',emoji:'🔴',tag:'台式',cal:180,desc:'沾花生粉和香菜，夜市必吃的特色小吃'},
+  {name:'拉麵',emoji:'🍜',tag:'日式',cal:580,desc:'濃郁湯頭、Q彈麵條，一碗暖胃暖心'},
+  {name:'壽司',emoji:'🍣',tag:'日式',cal:350,desc:'新鮮魚料握在醋飯上，入口即化'},
+  {name:'丼飯',emoji:'🥩',tag:'日式',cal:520,desc:'豐盛配料鋪在白飯上，簡單又滿足'},
+  {name:'炸豬排',emoji:'🥓',tag:'日式',cal:650,desc:'麵衣酥脆，豬排鮮嫩多汁'},
+  {name:'烏龍麵',emoji:'🍝',tag:'日式',cal:380,desc:'滑順Q彈的烏龍，湯頭清甜'},
+  {name:'天婦羅',emoji:'🍤',tag:'日式',cal:430,desc:'輕盈麵衣裹住食材，酥炸得恰到好處'},
+  {name:'日式咖哩',emoji:'🍛',tag:'日式',cal:560,desc:'濃郁醇厚的咖哩，配上白飯超下飯'},
+  {name:'壽喜燒',emoji:'🫕',tag:'日式',cal:490,desc:'甜鹹醬汁煨著牛肉，沾蛋液吃最棒'},
+  {name:'章魚燒',emoji:'🐙',tag:'日式',cal:310,desc:'外酥內嫩，淋上醬料撒柴魚片'},
+  {name:'親子丼',emoji:'🐔',tag:'日式',cal:500,desc:'滑嫩半熟蛋包著雞肉，溫柔的味道'},
+  {name:'韓國烤肉',emoji:'🥩',tag:'韓式',cal:600,desc:'現烤豬五花蘸著包菜，大口吃肉'},
+  {name:'部隊鍋',emoji:'🌭',tag:'韓式',cal:550,desc:'泡麵、起司、火腿一鍋煮，超療癒'},
+  {name:'石鍋拌飯',emoji:'🥘',tag:'韓式',cal:480,desc:'鍋底的脆鍋巴是靈魂，拌開吃'},
+  {name:'韓式炸雞',emoji:'🍗',tag:'韓式',cal:680,desc:'甜辣醬汁裹住酥脆炸雞，停不下來'},
+  {name:'辣炒年糕',emoji:'🌶',tag:'韓式',cal:420,desc:'Q彈年糕沾滿甜辣醬，街頭小食經典'},
+  {name:'小籠包',emoji:'🥟',tag:'中式',cal:320,desc:'咬破薄皮湯汁爆出，吹著吃才是行家'},
+  {name:'熱炒',emoji:'🍳',tag:'中式',cal:450,desc:'大火快炒下酒菜，台灣夜晚的靈魂'},
+  {name:'水餃',emoji:'🥟',tag:'中式',cal:360,desc:'手工捏出的半月形，沾醬吃最對味'},
+  {name:'麻婆豆腐',emoji:'🌶',tag:'中式',cal:280,desc:'麻辣鮮香的四川料理，配飯一絕'},
+  {name:'炸醬麵',emoji:'🍝',tag:'中式',cal:510,desc:'濃郁肉醬拌入手工麵，北方風味'},
+  {name:'越南河粉',emoji:'🍲',tag:'東南亞',cal:380,desc:'清爽牛骨湯，配上新鮮九層塔'},
+  {name:'打拋豬',emoji:'🌿',tag:'東南亞',cal:420,desc:'泰式打拋葉炒肉末，辣香下飯'},
+  {name:'綠咖哩',emoji:'🍛',tag:'東南亞',cal:460,desc:'椰奶香氣中帶著辣，泰式料理代表'},
+  {name:'月亮蝦餅',emoji:'🍤',tag:'東南亞',cal:340,desc:'酥脆蝦餅配甜辣醬，鮮味十足'},
+  {name:'叻沙',emoji:'🍜',tag:'東南亞',cal:490,desc:'椰奶咖哩湯底，新加坡的驕傲'},
+  {name:'漢堡',emoji:'🍔',tag:'西式',cal:650,desc:'多汁牛肉排夾在軟麵包裡，配薯條'},
+  {name:'義大利麵',emoji:'🍝',tag:'西式',cal:520,desc:'茄汁、奶油或青醬，選你最愛的'},
+  {name:'披薩',emoji:'🍕',tag:'西式',cal:700,desc:'拉絲起司配上各種配料，誰不愛'},
+  {name:'牛排',emoji:'🥩',tag:'西式',cal:580,desc:'煎到恰好的熟度，切開粉嫩多汁'},
+  {name:'早午餐',emoji:'🥞',tag:'西式',cal:550,desc:'慵懶的週末，來份豐盛的 Brunch'},
+  {name:'火鍋',emoji:'🫕',tag:'火鍋',cal:600,desc:'什麼料都能丟進去，圍著鍋子聊天'},
+  {name:'麻辣鍋',emoji:'🌶',tag:'火鍋',cal:700,desc:'紅通通的湯底，越辣越爽越停不了'},
+  {name:'燒肉',emoji:'🔥',tag:'燒烤',cal:650,desc:'自己動手烤，烤焦了也好吃'},
+  {name:'鐵板燒',emoji:'♨️',tag:'燒烤',cal:580,desc:'廚師在你面前大秀刀工，視覺盛宴'},
+  {name:'珍珠奶茶',emoji:'🧋',tag:'飲料',cal:350,desc:'Q彈珍珠泡在奶茶裡，台灣之光'},
+  {name:'蛋糕',emoji:'🎂',tag:'甜點',cal:420,desc:'鬆軟蛋糕體配上奶油，幸福感爆棚'},
+  {name:'冰淇淋',emoji:'🍦',tag:'甜點',cal:250,desc:'任何心情都需要一球冰淇淋'},
+  {name:'鬆餅',emoji:'🧇',tag:'甜點',cal:480,desc:'厚鬆餅配楓糖，下午茶最佳選擇'},
+  {name:'芒果冰',emoji:'🥭',tag:'甜點',cal:220,desc:'台灣芒果配煉乳剉冰，夏天救星'},
+  {name:'豆花',emoji:'🍮',tag:'甜點',cal:180,desc:'滑嫩豆花配糖水，古早味的溫柔'},
+];
+
+// ── State ─────────────────────────────────────────────────
+let deck = [], liked = [], history = [];
+let isDragging = false, startX = 0, startY = 0, currentX = 0;
+let activeCard = null;
+
+// ── Init ──────────────────────────────────────────────────
+function init() {
+  currentFortune = getDailyFortune();
+  renderFortune();
+  deck = shuffle([...FOODS]);
+  liked = []; history = [];
+  renderStack();
+  updateProgress();
+  document.getElementById('resultScreen').classList.remove('show');
+  document.getElementById('emptyScreen').classList.remove('show');
+  document.getElementById('stage').style.display = '';
+  document.getElementById('swipeHint').style.display = '';
+  document.getElementById('actionBtns').style.display = '';
+  document.getElementById('fortuneBanner').style.display = '';
+  document.getElementById('progress-wrap') && (document.getElementById('progress-wrap').style.display = '');
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  toast('查詢中...');
-  for(const url of[
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1&countrycodes=tw`,
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val+' 台灣')}&format=json&limit=1`
-  ]){
-    try{
-      const d=await(await fetch(url,{headers:{'Accept-Language':'zh-TW'}})).json();
-      if(d.length){
-        userLat=parseFloat(d[0].lat); userLng=parseFloat(d[0].lon);
-        document.getElementById('locVal').textContent=val;
-        document.getElementById('locCard').classList.add('active');
-        document.getElementById('manualRow').classList.remove('show');
-        document.getElementById('hintToggle').textContent='✏️ 手動輸入地址 或 貼上座標';
-        enableBtns(); toast('✅ 已定位：'+val); return;
-      }
-    }catch(_){}
-  }
-  toast('⚠️ 找不到地址，請貼座標');
+  return arr;
 }
 
-function selectCat(el){
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  selectedKw=el.dataset.kw;
-  selectedLabel=el.querySelector('.cat-n').textContent+'料理';
+function renderStack() {
+  const stack = document.getElementById('stack');
+  stack.innerHTML = '';
+  deck.slice(0, 3).forEach((food, idx) => stack.prepend(makeCard(food, idx)));
+  bindDrag();
 }
 
-function updateDist(v){
-  const d=parseInt(v);
-  document.getElementById('distVal').textContent=d>=1000?(d/1000).toFixed(1)+'km':d+'m';
+function makeCard(food, stackIdx) {
+  const div = document.createElement('div');
+  div.className = 'card ' + (stackIdx === 0 ? 'card-top' : stackIdx === 1 ? 'card-behind' : 'card-behind2');
+  div.innerHTML = `
+    <div class="card-bg">${food.emoji}</div>
+    <div class="stamp stamp-yes">想吃♥</div>
+    <div class="stamp stamp-no">不要✕</div>
+    <div class="card-content">
+      <div class="card-emoji-big">${food.emoji}</div>
+      <div class="card-meta">
+        <div class="card-tag">${food.tag}</div>
+        <div class="card-cal">🔥 ${food.cal} kcal</div>
+      </div>
+      <div class="card-name">${food.name}</div>
+      <div class="card-desc">${food.desc}</div>
+    </div>`;
+  return div;
 }
 
-function buildSrc(kw){
-  const dist=parseInt(document.getElementById('distSlider').value);
-  const zoom=dist<=300?17:dist<=600?16:dist<=1200?15:dist<=2000?14:13;
-  return `https://maps.google.com/maps?q=${encodeURIComponent(kw)}&ll=${userLat},${userLng}&z=${zoom}&hl=zh-TW&output=embed`;
+// ── Drag ──────────────────────────────────────────────────
+function bindDrag() {
+  const top = document.querySelector('.card-top');
+  if (!top) return;
+  activeCard = top;
+  top.addEventListener('mousedown', dragStart);
+  top.addEventListener('touchstart', dragStart, {passive: true});
 }
 
-function doSearch(){
-  if(!userLat){toast('請先取得定位！');return;}
-  loadMap(selectedKw, selectedLabel);
-  switchNav('map');
+function dragStart(e) {
+  isDragging = true;
+  const pt = e.touches ? e.touches[0] : e;
+  startX = pt.clientX; startY = pt.clientY; currentX = 0;
+  document.addEventListener('mousemove', dragMove);
+  document.addEventListener('touchmove', dragMove, {passive: false});
+  document.addEventListener('mouseup', dragEnd);
+  document.addEventListener('touchend', dragEnd);
 }
 
-function loadMap(kw, label){
-  document.getElementById('mapEmpty').style.display='none';
-  document.getElementById('mapToolbar').style.display='flex';
-  document.getElementById('curKwChip').textContent=label||kw;
-  const f=document.getElementById('mapFrame');
-  f.style.display='block';
-  f.src=buildSrc(kw);
+function dragMove(e) {
+  if (!isDragging || !activeCard) return;
+  if (e.cancelable) e.preventDefault();
+  const pt = e.touches ? e.touches[0] : e;
+  currentX = pt.clientX - startX;
+  const dy = (pt.clientY - startY) * 0.3;
+  activeCard.style.transform = `translateX(${currentX}px) translateY(${dy}px) rotate(${currentX * 0.08}deg)`;
+  activeCard.style.transition = 'none';
+  const ratio = Math.min(Math.abs(currentX) / 100, 1);
+  activeCard.querySelector('.stamp-yes').style.opacity = currentX > 20 ? ratio : 0;
+  activeCard.querySelector('.stamp-no').style.opacity = currentX < -20 ? ratio : 0;
 }
 
-function showLucky(){
-  if(!userLat){toast('請先取得定位！');return;}
-  reroll();
-  document.getElementById('overlay').classList.add('show');
-}
-
-function reroll(){
-  const pool=pools[selectedKw]||pools['餐廳 美食'];
-  luckyPick=pool[Math.floor(Math.random()*pool.length)];
-  const el=document.getElementById('sPick');
-  el.style.opacity='0'; el.style.transform='scale(0.7)';
-  setTimeout(()=>{
-    el.textContent=luckyPick;
-    el.style.transition='all 0.3s cubic-bezier(.34,1.56,.64,1)';
-    el.style.opacity='1'; el.style.transform='scale(1)';
-  },100);
-}
-
-function luckyGo(){
-  closeSheet();
-  loadMap(luckyPick, luckyPick);
-  switchNav('map');
-}
-
-function closeSheet(){document.getElementById('overlay').classList.remove('show');}
-
-function switchNav(tab){
-  document.getElementById('pageSearch').classList.toggle('active', tab==='search');
-  document.getElementById('pageMap').classList.toggle('active', tab==='map');
-  document.getElementById('navSearch').classList.toggle('active', tab==='search');
-  document.getElementById('navMap').classList.toggle('active', tab==='map');
-  // Fix map height
-  if(tab==='map'){
-    const mw=document.getElementById('mapWrap');
-    const frame=document.getElementById('mapFrame');
-    const h=document.getElementById('content').clientHeight;
-    mw.style.height=h+'px';
-    if(frame.style.display==='block') frame.style.height=h+'px';
+function dragEnd() {
+  isDragging = false;
+  document.removeEventListener('mousemove', dragMove);
+  document.removeEventListener('touchmove', dragMove);
+  document.removeEventListener('mouseup', dragEnd);
+  document.removeEventListener('touchend', dragEnd);
+  if (!activeCard) return;
+  if (currentX > 80) swipeCard('yes');
+  else if (currentX < -80) swipeCard('no');
+  else {
+    activeCard.style.transition = 'transform 0.4s cubic-bezier(.34,1.56,.64,1)';
+    activeCard.style.transform = '';
+    activeCard.querySelector('.stamp-yes').style.opacity = 0;
+    activeCard.querySelector('.stamp-no').style.opacity = 0;
   }
 }
 
-function goSearch(){switchNav('search');}
-
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2500);
+// ── Swipe ─────────────────────────────────────────────────
+function swipeCard(dir) {
+  if (!activeCard) return;
+  const food = deck[0];
+  const card = activeCard;
+  activeCard = null;
+  card.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+  card.style.transform = `translateX(${dir === 'yes' ? 600 : -600}px) rotate(${dir === 'yes' ? 30 : -30}deg)`;
+  card.style.opacity = '0';
+  history.push({food, dir});
+  if (dir === 'yes') liked.push(food);
+  deck.shift();
+  setTimeout(() => {
+    card.remove();
+    const cards = [...document.querySelectorAll('.card')];
+    cards.forEach((c, i) => {
+      c.className = 'card';
+      if (i === cards.length - 1) c.classList.add('card-top');
+      else if (i === cards.length - 2) c.classList.add('card-behind');
+      else c.classList.add('card-behind2');
+      c.style.transition = 'transform 0.3s ease';
+    });
+    if (deck.length >= 3) document.getElementById('stack').prepend(makeCard(deck[2], 2));
+    updateProgress();
+    if (deck.length === 0) { showEnd(); return; }
+    bindDrag();
+  }, 350);
 }
+
+function undoSwipe() {
+  if (!history.length) return;
+  const last = history.pop();
+  if (last.dir === 'yes') liked = liked.filter(f => f !== last.food);
+  deck.unshift(last.food);
+  renderStack();
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = FOODS.length;
+  const done = total - deck.length;
+  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+  document.getElementById('counterPill').textContent =
+    deck.length > 0 ? `還剩 ${deck.length} 道` : `❤ ${liked.length} 道`;
+}
+
+function showEnd() {
+  document.getElementById('stage').style.display = 'none';
+  document.getElementById('swipeHint').style.display = 'none';
+  document.getElementById('actionBtns').style.display = 'none';
+  document.getElementById('fortuneBanner').style.display = 'none';
+  if (liked.length === 0) { document.getElementById('emptyScreen').classList.add('show'); return; }
+  document.getElementById('resultSub').textContent = `從 50 道菜裡選出 ${liked.length} 道，今天就吃其中一個吧！`;
+  const grid = document.getElementById('likedGrid');
+  grid.innerHTML = '';
+  liked.forEach(food => {
+    const chip = document.createElement('div');
+    chip.className = 'liked-chip';
+    chip.innerHTML = `<div class="liked-chip-emoji">${food.emoji}</div><div class="liked-chip-name">${food.name}</div><div class="liked-chip-tag">${food.tag} · 🔥${food.cal}kcal</div>`;
+    grid.appendChild(chip);
+  });
+  document.getElementById('resultScreen').classList.add('show');
+}
+
+function restartApp() { init(); }
+init();
 </script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
 </body>
 </html>
